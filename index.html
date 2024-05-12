@@ -1,19 +1,143 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'">
-    <link href="./styles.css" rel="stylesheet">
-    <title>Hello World!</title>
-  </head>
-  <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>,
-    Chromium <span id="chrome-version"></span>,
-    and Electron <span id="electron-version"></span>.
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhaka Accidents App</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #map { height: calc(100vh - 50px); } /* Adjust height for the map */
+    </style>
+</head>
+<body>
+  <div class="container mt-3">
+    <div class="row">
+      <div class="col-md-4">
+          <div class="form-group d-flex align-items-center">
+              <label for="fromDate" style="margin-top:5px; margin-right:10px;">From:</label>
+              <input type="date" class="form-control" id="fromDate">
+          </div>
+      </div>
+      <div class="col-md-4">
+          <div class="form-group d-flex align-items-center">
+            <label for="toDate" style= "margin-top:5px; margin-right:10px;">To:</label>
+            <input type="date" class="form-control" id="toDate">
+          </div>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-primary btn-block" style="width: 150px;" onclick="filterMarkers()">Filter</button>
+      </div>
 
-    <!-- You can also require other files to run in this process -->
-    <script src="./renderer.js"></script>
-  </body>
+      <div class="col-md-2">
+        <button class="btn btn-primary btn-block" style="width: 150px;" onclick="processUrl()">Process URL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for URL input -->
+  <div class="modal" tabindex="-1" role="dialog" id="urlModal">
+      <div class="modal-dialog" role="document">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">Enter URL</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                  </button>
+              </div>
+              <div class="modal-body">
+                  <input type="url" class="form-control" id="urlInput">
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-primary" onclick="processEnteredUrl()">OK</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  
+  <div id="map"></div>
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+      function processUrl() {
+          $('#urlModal').modal('show');
+      }
+
+      function processEnteredUrl() {
+          var url = document.getElementById('urlInput').value;
+          console.log('Entered URL:', url);
+          $('#urlModal').modal('hide');
+      }
+  </script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+  <script>
+      var map = L.map('map').setView([23.8103, 90.4125], 12);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+
+      var markers = []; // Array to hold markers
+
+      // Read and parse CSV data
+      Papa.parse("data.csv", {
+          download: true,
+          header: true,
+          dynamicTyping: true,
+          complete: function(results) {
+              results.data.forEach(function(row) {
+                  var coordinates = row.location.split(":");
+                  var marker = L.marker([parseFloat(coordinates[0]), parseFloat(coordinates[1])]);
+
+                  // Create popup content
+                  var popupContent = "<b>Accident Details:</b><br>" +
+                      "Date: " + row.publication_date + "<br>" +
+                      "Vehicles Involved: " + row.vehicles_involved + "<br>" +
+                      "Casualties: " + row.casualties + "<br>" +
+                      "Injured Persons: " + row.injured_persons + "<br>" +
+                      "Reason: " + row.reason_for_accident + "<br>" +
+                      "Sequence of Actions: " + row.sequence_of_actions;
+
+                  // Bind popup to marker
+                  marker.bindPopup(popupContent);
+
+                  // Bind click event to marker
+                  marker.on('click', function(e) {
+                      map.setView(e.latlng, 13); // Set the view to the clicked marker's coordinates
+                  });
+
+                  markers.push({
+                      marker: marker,
+                      publication_date: new Date(row.publication_date)
+                  }); // Add marker to array
+              });
+
+              // Add all markers to the map
+              markers.forEach(function(data) {
+                  data.marker.addTo(map);
+              });
+          }
+      });
+
+      // Function to filter markers based on date range
+      function filterMarkers() {
+          var fromDate = new Date(document.getElementById("fromDate").value);
+          var toDate = new Date(document.getElementById("toDate").value);
+          
+          markers.forEach(function(data) {
+              if ((isNaN(fromDate) || data.publication_date >= fromDate) && (isNaN(toDate) || data.publication_date <= toDate)) {
+                  map.addLayer(data.marker);
+              } else {
+                  map.removeLayer(data.marker);
+              }
+          });
+      }
+  </script>
+</body>
 </html>

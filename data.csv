@@ -1,0 +1,5 @@
+location,publication_date,vehicles_involved,casualties,injured_persons,reason_for_accident,sequence_of_actions
+23.7806:90.4246,2024-04-15,Car,2,1,Speeding,The driver was speeding on a wet road and then lost control of the vehicle then  collided with a tree.
+23.762:90.404,2024-04-16,Motorcycle,1,0,Failure to Yield,The motorcyclist failed to yield at an intersection causing a collision with an oncoming vehicle.
+23.7431:90.376,2024-04-17,Truck,3,2,Distracted Driving,The truck driver was distracted by their phone then veered into the opposite lane followed by colliding head-on with another vehicle.
+23.8924:90.4037,2024-04-18,Bus,4,3,Reckless Driving,The bus driver was driving recklessly which then caused resulting in a multi-vehicle collision.
