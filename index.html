@@ -76,6 +76,7 @@
 
     var map;
     var markers = []; // Array to hold markers
+    var currentInfoWindow = null; // Variable to hold the currently open info window
 
     function initMap() {
         map = new google.maps.Map(document.getElementById('map'), {
@@ -95,9 +96,13 @@
         });
 
         marker.addListener('click', function() {
+            if (currentInfoWindow) {
+                currentInfoWindow.close();
+            }
             infowindow.open(map, marker);
-            map.setCenter(marker.getPosition());
-            map.setZoom(10);
+            currentInfoWindow = infowindow;
+            map.panTo(marker.getPosition());
+            // map.setZoom(10);
         });
 
         markers.push({
@@ -147,7 +152,7 @@
     }
 
     // Read and parse CSV data
-    Papa.parse("MaryamShahmardanli_VadzimValodzin_20240330_20220218.csv", {
+    Papa.parse("data.csv", {
         download: true,
         header: false, // Since the CSV file doesn't have a header row
         dynamicTyping: true,
@@ -192,7 +197,7 @@
             });
         }
     });
-
+    
     // Function to filter markers based on date range
     function filterMarkers() {
         var fromDate = new Date(document.getElementById("fromDate").value);
