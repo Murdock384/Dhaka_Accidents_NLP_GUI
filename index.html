@@ -9,7 +9,7 @@
     <style>
         #map { height: calc(100vh - 50px); } /* Adjust height for the map */
     </style>
-    <script src="https://maps.googleapis.com/maps/api/js?key=EDA_MYRE_CHECK_DISCORD"></script> <!-- Replace with your Google Maps API key -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJWlOabVXg-prWxnwg_z10o3lXAH60hzA"></script> <!-- Replace with your Google Maps API key -->
 </head>
 <body>
 <div class="container mt-3">
@@ -110,9 +110,21 @@
         return dateStr.slice(0, 4) + '-' + dateStr.slice(4, 6) + '-' + dateStr.slice(6, 8);
     }
 
+    // Function to extract location name
+    function extractLocation(locationMetadata) {
+        var location = locationMetadata.slice(1, -1); // Remove the angular brackets
+        if (location.includes(',')) {
+            location = location.split(',')[0]; // Take the first part before the comma
+        }
+        if (location.includes('(')) {
+            location = location.split('(')[1]; // Remove everything before and including '('
+        }
+        return location.trim();
+    }
+
     // Function to geocode location name to latitude and longitude using Google Maps API
     function geocodeLocation(locationName, callback) {
-        var apiKey = '{CHECK_DISCORD_BRO}'; // Replace with your Google Maps API key
+        var apiKey = 'AIzaSyBJWlOabVXg-prWxnwg_z10o3lXAH60hzA'; // Replace with your Google Maps API key
         var url = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + encodeURIComponent(locationName) + '&key=' + apiKey;
 
         fetch(url)
@@ -142,9 +154,9 @@
         complete: function(results) {
             results.data.forEach(function(row) {
                 // Extract relevant columns from the row
-                var locationMetadata = row[2];
+                var locationMetadata = row[9];
                 if (locationMetadata) {
-                    var locationName = locationMetadata.slice(1, -1); // Removes the first and last character
+                    var locationName = extractLocation(locationMetadata); // Removes the first and last character
                     // Now locationName will contain the formatted value without angular brackets
                     console.log(locationName);
 
