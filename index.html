@@ -68,12 +68,6 @@
         $('#urlModal').modal('show');
     }
 
-    function processEnteredUrl() {
-        var url = document.getElementById('urlInput').value;
-        console.log('Entered URL:', url);
-        $('#urlModal').modal('hide');
-    }
-
     var map;
     var markers = []; // Array to hold markers
     var currentInfoWindow = null; // Variable to hold the currently open info window
@@ -85,9 +79,51 @@
         });
     }
 
+    // function addMarker(latitude, longitude, popupContent) {
+    //     var marker = new google.maps.Marker({
+    //         position: {lat: latitude, lng: longitude},
+    //         map: map
+    //     });
+
+    //     var infowindow = new google.maps.InfoWindow({
+    //         content: popupContent
+    //     });
+
+    //     marker.addListener('click', function() {
+    //         if (currentInfoWindow) {
+    //             currentInfoWindow.close();
+    //         }
+    //         infowindow.open(map, marker);
+    //         currentInfoWindow = infowindow;
+    //         map.panTo(marker.getPosition());
+    //         // map.setZoom(10);
+    //     });
+
+    //     markers.push({
+    //         marker: marker,
+    //         publication_date: new Date(popupContent.match(/Date: ([^<]*)/)[1]) // Extract publication date from popupContent
+    //     });
+    // }
+
     function addMarker(latitude, longitude, popupContent) {
+        var markerExists = false;
+        var newMarkerPosition = { lat: latitude, lng: longitude };
+
+        // Check if a marker already exists at the specified location
+        markers.forEach(function(data) {
+            var existingMarkerPosition = data.marker.getPosition();
+            if (existingMarkerPosition.lat() === latitude && existingMarkerPosition.lng() === longitude) {
+                markerExists = true;
+                // Adjust the position slightly
+                newMarkerPosition = {
+                    lat: latitude + (Math.random() - 0.5) * 0.001, // Adjust latitude randomly by a small value
+                    lng: longitude + (Math.random() - 0.5) * 0.001 // Adjust longitude randomly by a small value
+                };
+            }
+        });
+
         var marker = new google.maps.Marker({
-            position: {lat: latitude, lng: longitude},
+            position: newMarkerPosition, // Use the adjusted position if a marker already exists
             map: map
         });
 
@@ -118,6 +154,9 @@
     // Function to extract location name
     function extractLocation(locationMetadata) {
         var location = locationMetadata.slice(1, -1); // Remove the angular brackets
+        if (location === "NA") {
+            return null; // Return null for "NA" values
+        }
         if (location.includes(',')) {
             location = location.split(',')[0]; // Take the first part before the comma
         }
@@ -125,6 +164,68 @@
             location = location.split('(')[1]; // Remove everything before and including '('
         }
         return location.trim();
+    }
+
+    function processEnteredUrl() {
+        var url = document.getElementById('urlInput').value;
+        url = "<"+url+">"
+        console.log('Entered URL:', url);
+        var urlFound = null;
+
+        // Iterate through the CSV data to find a matching URL
+        Papa.parse("data.csv", {
+            download: true,
+            header: false,
+            dynamicTyping: true,
+            complete: function(results) {
+                results.data.forEach(function(row) {
+                    // var accidentUrl = row[0].slice(1,-1);
+                    var accidentUrl = row[0]; // Assuming the URL is in the first column
+                    // Check if the accident URL matches the entered URL
+                    if (accidentUrl === url) {
+                        var locationMetadata = row[9];
+                        var locationName = extractLocation(locationMetadata);
+                        var publicationDateMetadata = formatDate(row[1].slice(1,-1));
+                        var primaryVehicleInvolved = row[19].slice(1,-1);
+                        var secondaryVehicleInvolved = row[20].slice(1,-1);
+                        var tertiaryVehicleInvolved = row[21].slice(1,-1);
+                        var totalKilled = row[16].slice(1,-1);
+                        var totalInjured = row[17].slice(1,-1);
+                        var agesOfDeceased = row[22].slice(1,-1);
+                        var reasonForAccident = row[18].slice(1,-1);
+
+                        // Geocode location name to latitude and longitude
+                        geocodeLocation(locationName, function(latitude, longitude) {
+                            if (latitude !== null && longitude !== null) {
+                                // Set map center to the location of the URL
+                                map.setCenter({lat: latitude, lng: longitude});
+                                // map.setZoom(12); // Optional: Zoom in to the location
+
+                                // Create popup content
+                                var popupContent = "<b>Accident Details:</b><br>" +
+                                    "Date: " + publicationDateMetadata + "<br>" +
+                                    "Primary Vehicle Involved: " + primaryVehicleInvolved + "<br>" +
+                                    "Secondary Vehicle Involved: " + secondaryVehicleInvolved + "<br>" +
+                                    "Tertiary Vehicle Involved: " + tertiaryVehicleInvolved + "<br>" +
+                                    "Total Killed: " + totalKilled + "<br>" +
+                                    "Total Injured: " + totalInjured + "<br>" +
+                                    "Ages of Deceased: " + agesOfDeceased + "<br>" +
+                                    "Reason for Accident: " + reasonForAccident;
+
+                                // Add marker for the found location
+                                addMarker(latitude, longitude, popupContent);
+                                urlFound = true;
+                                console.log("URL FOUND",urlFound);
+                                return; // Exit the loop once a match is found
+                            }
+                        });
+                    }
+                });
+                
+            }
+        });
+
+        $('#urlModal').modal('hide');
     }
 
     // Function to geocode location name to latitude and longitude using Google Maps API
@@ -159,6 +260,7 @@
         complete: function(results) {
             results.data.forEach(function(row) {
                 // Extract relevant columns from the row
+                console.log("ROW",row)
                 var locationMetadata = row[9];
                 if (locationMetadata) {
                     var locationName = extractLocation(locationMetadata); // Removes the first and last character
