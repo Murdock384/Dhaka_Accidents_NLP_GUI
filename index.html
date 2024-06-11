@@ -173,7 +173,7 @@
         var urlFound = null;
 
         // Iterate through the CSV data to find a matching URL
-        Papa.parse("data.csv", {
+        Papa.parse("processed2.csv", {
             download: true,
             header: false,
             dynamicTyping: true,
@@ -185,7 +185,6 @@
                     if (accidentUrl === url) {
                         var locationMetadata = row[9];
                         var locationName = extractLocation(locationMetadata);
-                        // var locationName = locationMetadata;
                         var publicationDateMetadata = formatDate(row[1].slice(1,-1));
                         var primaryVehicleInvolved = row[19].slice(1,-1);
                         var secondaryVehicleInvolved = row[20].slice(1,-1);
@@ -254,7 +253,7 @@
     }
 
     // Read and parse CSV data
-    Papa.parse("data.csv", {
+    Papa.parse("processed2.csv", {
         download: true,
         header: false, // Since the CSV file doesn't have a header row
         dynamicTyping: true,
@@ -265,8 +264,6 @@
                 var locationMetadata = row[9];
                 if (locationMetadata) {
                     var locationName = extractLocation(locationMetadata); // Removes the first and last character
-                    // var locationName = locationMetadata;
-                    // Now locationName will contain the formatted value without angular brackets
                     console.log(locationName);
 
                     var publicationDateMetadata = formatDate(row[1].slice(1,-1));
