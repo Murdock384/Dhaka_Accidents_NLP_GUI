@@ -185,6 +185,7 @@
                     if (accidentUrl === url) {
                         var locationMetadata = row[9];
                         var locationName = extractLocation(locationMetadata);
+                        // var locationName = locationMetadata;
                         var publicationDateMetadata = formatDate(row[1].slice(1,-1));
                         var primaryVehicleInvolved = row[19].slice(1,-1);
                         var secondaryVehicleInvolved = row[20].slice(1,-1);
@@ -264,6 +265,7 @@
                 var locationMetadata = row[9];
                 if (locationMetadata) {
                     var locationName = extractLocation(locationMetadata); // Removes the first and last character
+                    // var locationName = locationMetadata;
                     // Now locationName will contain the formatted value without angular brackets
                     console.log(locationName);
 
